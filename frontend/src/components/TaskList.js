@@ -1,10 +1,16 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import Task from "./Task";
 import TaskForm from "./TaskForm";
 import axios from "axios";
+import { URL } from "../App";
+import loadingImg from "../assets/loader.gif";
 
 const TaskList = () => {
+  const [tasks, setTasks] = useState([]);
+  const [completedTasks, setCompletedTasks] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+
   const [formData, setFormData] = useState({
     name: "",
     completed: false,
@@ -14,6 +20,22 @@ const TaskList = () => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
+  const getTasks = async () => {
+    setIsLoading(true);
+    try {
+      const { data } = await axios.get(`${URL}/api/tasks`);
+      setTasks(data);
+      setIsLoading(false);
+    } catch (error) {
+      toast.error(error.message);
+
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    getTasks();
+  }, []);
 
   const createTask = async (e) => {
     e.preventDefault();
@@ -21,7 +43,7 @@ const TaskList = () => {
       return toast.error("Input field cannot be empty");
     }
     try {
-      await axios.post("http://localhost:5000/api/tasks", formData);
+      await axios.post(`${URL}/api/tasks`, formData);
       setFormData({ ...formData, name: "" });
       toast.success("Task added successfully");
     } catch (error) {
@@ -29,6 +51,16 @@ const TaskList = () => {
       console.log(error);
     }
   };
+
+  const deleteTask = async (id) => {
+    try {
+      await axios.delete(`${URL}/api/tasks/${id}`);
+      getTasks();
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
   return (
     <div>
       <h2>Task Manager</h2>
@@ -46,7 +78,27 @@ const TaskList = () => {
         </p>
       </div>
       <hr />
-      <Task />
+      {isLoading && (
+        <div className="--flex-center">
+          <img src={loadingImg} alt="Loading" />
+        </div>
+      )}
+      {!isLoading && tasks.length === 0 ? (
+        <p className="--py">No task added.Please add a task</p>
+      ) : (
+        <>
+          {tasks.map((task, index) => {
+            return (
+              <Task
+                key={task._id}
+                task={task}
+                index={index}
+                deleteTask={deleteTask}
+              />
+            );
+          })}
+        </>
+      )}
     </div>
   );
 };
