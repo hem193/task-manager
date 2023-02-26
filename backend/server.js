@@ -5,10 +5,11 @@ const mongoose = require("mongoose");
 const Task = require("./models/taskModel");
 const taskRoutes = require("./routes/taskRoute");
 const app = express();
-
+const cors = require("cors");
 //Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(cors());
 app.use("/api/tasks", taskRoutes);
 // Routes
 app.get("/", (req, res) => {
